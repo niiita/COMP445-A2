@@ -149,6 +149,8 @@ public class Server {
                 //path = "C:\\Users\\\\Chun\\\\eclipse-workspace\\COMP445-A2";
                 //method = "GET";
                 //filename = "gremlin.txt";
+                //method = "POST";
+                //filename = null;
                 
                 if(method.equalsIgnoreCase("GET") && filename == null) {
                 	getFileNames(path);
