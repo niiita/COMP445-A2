@@ -17,6 +17,9 @@ import java.util.regex.*;
 import java.util.Arrays;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.ServerSocket;
+
+import java.net.InetSocketAddress;
 
 
 import java.io.File;
@@ -28,20 +31,92 @@ public class Server {
     private static boolean patternCheck = false;
     private final static String HTTP_METHOD_GET = "GET";
     private final static String HTTP_METHOD_POST = "POST";
-    public final static int DEFAULT_PORT = 80;
     private static File filename;
+    //Default path
+    private final static String DEFAULT_PATH = "C:\\Users\\Chun\\eclipse-workspace\\COMP445-A2";
+    //Default port
+	private final static int DEFAULT_PORT = 3001;
+    
+    private static String path = "";
+	private static String requestMethod = "";
+	public static int port = 3001;
+
+	private final static String DEFAULT_SERVER_ADDRESS = "localhost";
+
+	private static String data = "";
+	private static boolean isVerbose = false;
        
 	public static void main(String[] args) {        
         try {
             while (patternCheck != true) {
-                ServerSocket server = new ServerSocket(3001);
+            	
+            	
+            	String httpfsUserRequest;
+                Console console = System.console();
+            	
+            	while(patternCheck == false) {
+            		httpfsUserRequest = console.readLine("Enter an httpfs option (0 to exit): ");
+
+                    if(httpfsUserRequest.equalsIgnoreCase("0")) {
+                		System.exit(0);
+                	}
+                    
+                    //Regex pattern; separate entities grouped within parenthesis
+                    Pattern pattern = Pattern.compile("(httpfs\\s*)((-p)\\s*(\\b([0-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-9][0-9][0-9][0-9]|[1-5][0-9][0-9][0-9][0-9]|[6][0-4][0-9][0-9][0-9]|[6][5][0-4][0-9][0-9]|[6][5][5][0-2][0-9]|[6][5][5][3][0-5])\\b\\s*)|(\\s*(-v)\\s*)|(\\s*(-d)\\s*([^\\s\\\\]{10,1000}))\\s*)((-p)\\s*(\\b([0-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-9][0-9][0-9][0-9]|[1-5][0-9][0-9][0-9][0-9]|[6][0-4][0-9][0-9][0-9]|[6][5][0-4][0-9][0-9]|[6][5][5][0-2][0-9]|[6][5][5][3][0-5])\\b\\s*)|(\\s*(-v)\\s*)|(\\s*(-d)\\s*([^\\s\\\\]{10,1000}))\\s*)?((-p)\\s*(\\b([0-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-9][0-9][0-9][0-9]|[1-5][0-9][0-9][0-9][0-9]|[6][0-4][0-9][0-9][0-9]|[6][5][0-4][0-9][0-9]|[6][5][5][0-2][0-9]|[6][5][5][3][0-5])\\b\\s*)|(\\s*(-v)\\s*)|(\\s*(-d)\\s*([^\\s\\\\]{10,1000}))\\s*)?");
+
+                    // Now create matcher object.
+                    Matcher m = pattern.matcher(httpfsUserRequest);
+                    	
+            	        if (m.find()) {
+            	
+            	            patternCheck = true;
+            	            
+            	            var patternLength = m.group().length();
+            	            
+            	            //Ensuring that we don't go over the cap
+            	            if(patternLength > 28) {
+            	            	patternLength = 28;
+            	            }
+            	            
+            	            for(int i = 5; i < patternLength; i++)
+            	            {
+            	            	
+            	            	if(m.group(i) != null) {
+            	            		System.out.println(m.group(i));
+            		            	if(m.group(i).equals("-v")) 
+            		            	{
+            		            		//Is verbose if -v
+            		            		isVerbose = true;
+            		            	}
+            		            	else if (m.group(i).equals("-p")) 
+            		            	{
+            		            		//Assign the port if it exists
+            		            		port = Integer.parseInt(m.group(i + 1));
+            		            	}
+            		            	else if (m.group(i).equals("-d")) {
+            		            		//Assign the path if it exists
+            		            		data = m.group(i + 1);
+            		            	}
+            	            	}
+            	            }
+            	        }
+            	        else {
+            	        	System.out.println("Invalid entry, try again or press 0 to exit.");
+            	        }
+                }
+            	
+                ServerSocket server = new ServerSocket(port);
                 
-                System.out.println("Server listening to port " + 3001);
+                System.out.println("Server listening to port " + port);
                 Socket clientSocket  = server.accept();
+                
+            
+                System.out.println(clientSocket);
                 System.out.println("Server accepted connection");
                 
                 InputStream inputStream = clientSocket.getInputStream();
                 OutputStream outputStream = clientSocket.getOutputStream();
+                
                 
                 StringBuilder request = new StringBuilder();
                 int data = inputStream.read();
@@ -60,64 +135,46 @@ public class Server {
                 }
                 
                 System.out.println("\nRequest From client");
-                System.out.println(request);
                 
+                //path = "C:\\Users\\\\Chun\\\\eclipse-workspace\\COMP445-A2";
+                //requestMethod = "POST";
+                //filename = null;
                 
-                //Regex pattern; separate entities grouped within parenthesis
-                Pattern pattern = Pattern.compile("httpc(\\s+(get|post))((\\s+-v)?(\\s+-h\\s+([^\\s]+))?(\\s+-d\\s+('.+'))?(\\s+-f\\s+([^\\s]+))?)(\\s+'((http[s]?:\\/\\/www\\.|http[s]?:\\/\\/|www\\.)?([^\\/]+)(\\/.+)?)'*)");
-        
-                // Now create matcher object.
-                Matcher m = pattern.matcher(request);
-
-                System.out.println("x");
-
-                if (m.find()) {
-                    System.out.println("y");
-
-                    patternCheck = true;
-                    /*
-                    * Group 2: Get or Post				m.group(2)
-                    * Group 4: verbose -v				m.group(4)
-                    * Group 5: header -h				m.group(5)
-                    * Group 6: Header content 			m.group(6)
-                    * Group 7: data -d					m.group(7)
-                    * Group 8: Data content			m.group(8)
-                    * Group 9: file -f					m.group(9)
-                    * Group 10: File content			m.group(10)
-                    * Group 12: URL					m.group(12)
-                    * Group 14: Host					m.group(14)
-                    * Group 15: Path					m.group(15)
-                    */
-
-                    String type = m.group(2);
-                    System.out.println("DEBUG TYPE:" + type);
-
-                    //Assign the path if not empty
-                    String path = "";
-
-                    if (m.group(15) != null) {
-                        path = m.group(15).replaceAll("'", "").trim();
-                        filename = new File(m.group(10));
-                    }
+                if(requestMethod.equalsIgnoreCase("GET") && filename == null) {
+                	getFileNames(path);
+                }
+                else if(requestMethod.equalsIgnoreCase("GET") && filename != null) {
+                	get(path, filename);
+                }
+                else if(requestMethod.equalsIgnoreCase("POST")) {
+                	post(path, filename);
+                }
                     
-                    System.out.println("DEBUG PATH:" + path);
-
-                    if (type.equals("GET")) {
-                        get(path, filename);
-                    } else if (type.equals("POST")) {
-                        post(path, filename);
-                    }       
-                    
-                System.out.println("DEBUG FILENAME:" + filename);
                 clientSocket.close();
                 server.close();
-        }
+        	}
         
-    }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
+	
+	// Lists all the files in a given directory
+	public static void getFileNames(String path) {		
+		File directory = new File(path);	
+	
+		File[] items =  directory.listFiles();
+		String line = "";		
+		for (int i = 0; i < items.length; i++) {
+			if (items[i].isFile())
+				line += items[i].getName() + "\r\n";			
+			else if (items[i].isDirectory())
+				line += "<DIRECTORY>" + items[i].getName() + "\r\n";			
+		}
+	
+		formattedOutputResponse(line);
+	}
     
     public static void get(String path, File filename){
             String body = "";
@@ -146,6 +203,7 @@ public class Server {
 					String[] linesArray = formattedLine.split(",");
                     for (int i = 0; i < linesArray.length; i++) {
 						StringBuilder.append(linesArray[i]+",");
+						System.out.println(linesArray[i]);
 					}				
 					body = "{"+StringBuilder.toString().substring(0, StringBuilder.length() - 1)+"}";
 					request = "POST /post?info=info HTTP/1.0\r\n"
@@ -155,6 +213,8 @@ public class Server {
 							+ body;
 
                     } in.close();
+                    
+                    
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -176,6 +236,7 @@ public class Server {
 					String[] linesArray = formattedLine.split(",");
                     for (int i = 0; i < linesArray.length; i++) {
 						StringBuilder.append(linesArray[i]+",");
+						System.out.println(linesArray[i]);
 					}				
 					body = "{"+StringBuilder.toString().substring(0, StringBuilder.length() - 1)+"}";
 					request = "POST /post?info=info HTTP/1.0\r\n"
@@ -185,6 +246,8 @@ public class Server {
 							+ body;
 
 				} in .close();
+				
+				
 			
         } catch (Exception e) {
             e.printStackTrace();
@@ -195,10 +258,14 @@ public class Server {
 
     private static void formattedOutputResponse(String response) {
 
-       String[] responseFormatted = response.split("\n\n");
+    	if (isVerbose) {
+            System.out.println(response);
+        } else {
+            String[] responseFormatted = response.split("\n\n");
 
             for (int i = 1; i < responseFormatted.length; i++)
                 System.out.println(responseFormatted[i]);
+        }
         
     }
 
