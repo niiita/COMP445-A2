@@ -38,7 +38,7 @@ public class Server {
 	private final static int DEFAULT_PORT = 3001;
     
     private static String path = "";
-	private static String requestMethod = "";
+	private static String method = "";
 	public static int port = 3001;
 
 	private final static String DEFAULT_SERVER_ADDRESS = "localhost";
@@ -48,9 +48,9 @@ public class Server {
        
 	public static void main(String[] args) {        
         try {
+          
             while (patternCheck != true) {
-            	
-            	
+         
             	String httpfsUserRequest;
                 Console console = System.console();
             	
@@ -135,18 +135,28 @@ public class Server {
                 }
                 
                 System.out.println("\nRequest From client");
+                System.out.println(request);
+
+                String[] req = request. toString().split(" ", -2);
+
+                String method = req[0].toString();
+                String path = req[1].toString();
+
+                System.out.println(method + " & " + path);
+                String filename = path.substring((path.lastIndexOf("/")+1), (path.length()));
+                System.out.println("filename: " + filename);
                 
                 //path = "C:\\Users\\\\Chun\\\\eclipse-workspace\\COMP445-A2";
-                //requestMethod = "POST";
-                //filename = null;
+                //method = "GET";
+                //filename = "gremlin.txt";
                 
-                if(requestMethod.equalsIgnoreCase("GET") && filename == null) {
+                if(method.equalsIgnoreCase("GET") && filename == null) {
                 	getFileNames(path);
                 }
-                else if(requestMethod.equalsIgnoreCase("GET") && filename != null) {
+                else if(method.equalsIgnoreCase("GET") && filename != null) {
                 	get(path, filename);
                 }
-                else if(requestMethod.equalsIgnoreCase("POST")) {
+                else if(method.equalsIgnoreCase("POST")) {
                 	post(path, filename);
                 }
                     
@@ -160,38 +170,44 @@ public class Server {
         }
     }
 	
-	// Lists all the files in a given directory
-	public static void getFileNames(String path) {		
-		File directory = new File(path);	
-	
-		File[] items =  directory.listFiles();
-		String line = "";		
-		for (int i = 0; i < items.length; i++) {
-			if (items[i].isFile())
-				line += items[i].getName() + "\r\n";			
-			else if (items[i].isDirectory())
-				line += "<DIRECTORY>" + items[i].getName() + "\r\n";			
-		}
-	
-		formattedOutputResponse(line);
-	}
+    // Lists all the files in a given directory
+    public static void getFileNames(String path) {		
+      File directory = new File(path);	
+
+      File[] items =  directory.listFiles();
+      String line = "";		
+      for (int i = 0; i < items.length; i++) {
+        if (items[i].isFile())
+          line += items[i].getName() + "\r\n";			
+        else if (items[i].isDirectory())
+          line += "<DIRECTORY>" + items[i].getName() + "\r\n";			
+      }
+
+      formattedOutputResponse(line);
+    }
+
+             
     
-    public static void get(String path, File filename){
+    public static void get(String path, String filename){
             String body = "";
-			String request = "";
-		if (path == "" || path == null){
-            body = "{\"A2\" : \"get request\"}";
-			
-			String response = 	"HTTP/1.0 200 ok\r\n"
-							 	+ "Content-Length: " + body.length() + "\r\n"
-							 	+ "Content-Disposition: inline"+ "\r\n"
-							 	+ "Content-Disposition: attachment; filename=\"get.json\"" + "\r\n"
-								+ "Content-Type: application/json\r\n\r\n"
-			 					+ body;
-			
-			System.out.println("Response sent to client\n" + response);
-        }else{
+            String response = "";
             
+            //If there is no path (i.e. just localhost:3001 is called)
+		    if ((path.length()<=1) || path == null){
+
+            body = "{\"A2\" : \"sample body for get request\"}";
+			
+			response = 	"HTTP/1.0 200 ok\r\n"
+                        + "Content-Length: " + body.length() + "\r\n"
+                        + "Content-Disposition: inline"+ "\r\n"
+                        + "Content-Disposition: attachment; filename=\"default.json\"" + "\r\n"
+                        + "Content-Type: application/json\r\n\r\n"
+                        + body;
+			
+            System.out.println("Response sent to client\n" + response);
+            
+            }else{
+            //If there is a path (should be able to read text, for example a json formatted txt file or just some text and return as body)
             try {  
                 BufferedReader in = new BufferedReader(new FileReader(filename));
 				String line = "";
@@ -202,29 +218,51 @@ public class Server {
 
 					String[] linesArray = formattedLine.split(",");
                     for (int i = 0; i < linesArray.length; i++) {
+
 						StringBuilder.append(linesArray[i]+",");
 						System.out.println(linesArray[i]);
+
+						StringBuilder.append(linesArray[i]+", ");
 					}				
 					body = "{"+StringBuilder.toString().substring(0, StringBuilder.length() - 1)+"}";
-					request = "POST /post?info=info HTTP/1.0\r\n"
-							+ "Content-Type:application/json\r\n"
-							+ "Content-Length: " + body.length() +"\r\n"
-							+ "\r\n"
-							+ body;
+					response = "HTTP/1.0 200 OK\r\n"
+                            + "Content-Length: " + body.length() + "\r\n"
+                            + "Content-Disposition: inline"+ "\r\n"
+                            + "Content-Disposition: attachment; filename=\""+filename+"\"" + "\r\n"
+                            + "Content-Type: application/json\r\n\r\n"
+                            + body;
 
                     } in.close();
-                    
-                    
+                    System.out.println("Response sent to client\n" + response);
+
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    //Maybe we can create an actual 404 response from server here?
+                    System.out.println("Sorry the file you are looking for does not exist");
+                    response = 	"HTTP/1.0 404 Not Found\r\n"
+							 	+ "User Agent: Concordia\r\n";
+                    System.out.println("Response sent to client\n" + response);
+                    // e.printStackTrace();
                 }
         }			
     }
 
-    public static void post(String path, File filename) {
+    public static void post(String path, String filename) {
         String body = "";
         String request = "";
 
+        /*
+        if(directory in path exists){
+            if(filename already exists){
+
+            }else{
+                // append contents to contents already in existing file
+            }
+            
+            //create new file named filename and add content(?)
+
+        }else{
+            // create new directories inquired in path
+        }
         try {  
             	BufferedReader in = new BufferedReader(new FileReader(filename));
 				String line = "";
@@ -252,7 +290,7 @@ public class Server {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        */
        
     }
 
