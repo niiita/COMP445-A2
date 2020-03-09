@@ -71,7 +71,7 @@ public class Server {
             	
             	            patternCheck = true;
             	            
-            	            var patternLength = m.group().length();
+            	            int patternLength = m.group().length();
             	            
             	            //Ensuring that we don't go over the cap
             	            if(patternLength > 28) {
@@ -223,8 +223,6 @@ public class Server {
 
 						StringBuilder.append(linesArray[i]+",");
 						System.out.println(linesArray[i]);
-
-						StringBuilder.append(linesArray[i]+", ");
 					}				
 					body = "{"+StringBuilder.toString().substring(0, StringBuilder.length() - 1)+"}";
 					response = "HTTP/1.0 200 OK\r\n"
