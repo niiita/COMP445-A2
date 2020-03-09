@@ -28,7 +28,7 @@ public class Httpc {
     private final static String FILE_OPTION = "-f";
     private final static String DATA_OPTION = "-d";
     private final static String VERBOSE_OPTION = "-v";
-    public final static int DEFAULT_PORT = 80;
+    public final static int DEFAULT_PORT = 3001;
 
     private static boolean isVerbose = false;
     private static boolean isData = false;
