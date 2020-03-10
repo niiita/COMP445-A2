@@ -310,7 +310,7 @@ public class Httpc {
 
         try {
             //Initialize the socket
-            Socket socket = new Socket(host, DEFAULT_PORT);
+            Socket socket = new Socket("localhost", 3001);
 			PrintWriter writer = new PrintWriter(socket.getOutputStream());
 			InputStream inputStream = socket.getInputStream();
 			OutputStream outputStream = socket.getOutputStream();
