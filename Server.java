@@ -43,7 +43,7 @@ public class Server {
 
 	private final static String DEFAULT_SERVER_ADDRESS = "localhost";
 
-	private static String data = "";
+	private static String dataInput = "";
 	private static boolean isVerbose = false;
        
 	public static void main(String[] args) {        
@@ -62,7 +62,7 @@ public class Server {
                 	}
                     
                     //Regex pattern; separate entities grouped within parenthesis
-                    Pattern pattern = Pattern.compile("(httpfs\\s*)((-p)\\s*(\\b([0-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-9][0-9][0-9][0-9]|[1-5][0-9][0-9][0-9][0-9]|[6][0-4][0-9][0-9][0-9]|[6][5][0-4][0-9][0-9]|[6][5][5][0-2][0-9]|[6][5][5][3][0-5])\\b\\s*)|(\\s*(-v)\\s*)|(\\s*(-d)\\s*([^\\s\\\\]{10,1000}))\\s*)((-p)\\s*(\\b([0-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-9][0-9][0-9][0-9]|[1-5][0-9][0-9][0-9][0-9]|[6][0-4][0-9][0-9][0-9]|[6][5][0-4][0-9][0-9]|[6][5][5][0-2][0-9]|[6][5][5][3][0-5])\\b\\s*)|(\\s*(-v)\\s*)|(\\s*(-d)\\s*([^\\s\\\\]{10,1000}))\\s*)?((-p)\\s*(\\b([0-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-9][0-9][0-9][0-9]|[1-5][0-9][0-9][0-9][0-9]|[6][0-4][0-9][0-9][0-9]|[6][5][0-4][0-9][0-9]|[6][5][5][0-2][0-9]|[6][5][5][3][0-5])\\b\\s*)|(\\s*(-v)\\s*)|(\\s*(-d)\\s*([^\\s\\\\]{10,1000}))\\s*)?");
+                    Pattern pattern = Pattern.compile("(httpfs\\s*)((-p)\\s*(\\b([0-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-9][0-9][0-9][0-9]|[1-5][0-9][0-9][0-9][0-9]|[6][0-4][0-9][0-9][0-9]|[6][5][0-4][0-9][0-9]|[6][5][5][0-2][0-9]|[6][5][5][3][0-5])\\b\\s*)|(\\s*(-v)\\s*)|(\\s*(-d)\\s*([^\\s]{10,1000}))\\s*)((-p)\\s*(\\b([0-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-9][0-9][0-9][0-9]|[1-5][0-9][0-9][0-9][0-9]|[6][0-4][0-9][0-9][0-9]|[6][5][0-4][0-9][0-9]|[6][5][5][0-2][0-9]|[6][5][5][3][0-5])\\b\\s*)|(\\s*(-v)\\s*)|(\\s*(-d)\\s*([^\\s]{10,1000}))\\s*)?((-p)\\s*(\\b([0-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-9][0-9][0-9][0-9]|[1-5][0-9][0-9][0-9][0-9]|[6][0-4][0-9][0-9][0-9]|[6][5][0-4][0-9][0-9]|[6][5][5][0-2][0-9]|[6][5][5][3][0-5])\\b\\s*)|(\\s*(-v)\\s*)|(\\s*(-d)\\s*([^\\s]{10,1000}))\\s*)?");
 
                     // Now create matcher object.
                     Matcher m = pattern.matcher(httpfsUserRequest);
@@ -82,7 +82,6 @@ public class Server {
             	            {
             	            	
             	            	if(m.group(i) != null) {
-            	            		System.out.println(m.group(i));
             		            	if(m.group(i).equals("-v")) 
             		            	{
             		            		//Is verbose if -v
@@ -95,7 +94,12 @@ public class Server {
             		            	}
             		            	else if (m.group(i).equals("-d")) {
             		            		//Assign the path if it exists
-            		            		data = m.group(i + 1);
+            		            		dataInput = m.group(i + 1);
+            		            		File test = new File(dataInput);
+            		            		if(!test.exists()) {
+            		            			System.out.println(errorResponse(404));
+            		            			System.exit(0);
+            		            		}
             		            	}
             	            	}
             	            }
@@ -104,6 +108,9 @@ public class Server {
             	        	System.out.println("Invalid entry, try again or press 0 to exit.");
             	        }
                 }
+            	
+            	
+            	
             	
                 ServerSocket server = new ServerSocket(port);
                 
@@ -141,7 +148,7 @@ public class Server {
 
                 String method = req[0].toString();
                 String path = req[1].toString();
-
+                System.out.println("path: " + path);
                 System.out.println(method + " & " + path);
                 String filename = path.substring((path.lastIndexOf("/")+1), (path.length()));
                 System.out.println("filename: " + filename);
@@ -152,14 +159,15 @@ public class Server {
                 //method = "POST";
                 //filename = null;
                 
-                if(method.equalsIgnoreCase("GET") && filename == null) {
-                	getFileNames(path);
+                if(method.equalsIgnoreCase("GET") && (filename.isBlank() || !filename.contains("."))) {
+                	getFileNames(dataInput);
                 }
-                else if(method.equalsIgnoreCase("GET") && filename != null) {
-                	get(path, filename);
+                else if(method.equalsIgnoreCase("GET") && !filename.isBlank() && filename.contains(".")) {
+                	System.out.println("THIS WORKS");
+                	get(dataInput, filename);
                 }
                 else if(method.equalsIgnoreCase("POST")) {
-                	post(path, filename);
+                	post(dataInput, filename);
                 }
                     
                 clientSocket.close();
@@ -175,17 +183,24 @@ public class Server {
     // Lists all the files in a given directory
     public static void getFileNames(String path) {		
       File directory = new File(path);	
-
+      
       File[] items =  directory.listFiles();
-      String line = "";		
-      for (int i = 0; i < items.length; i++) {
-        if (items[i].isFile())
-          line += items[i].getName() + "\r\n";			
-        else if (items[i].isDirectory())
-          line += "<DIRECTORY>" + items[i].getName() + "\r\n";			
+      
+      System.out.println(items);
+      String line = "";
+      if(items != null) {
+	      for (int i = 0; i < items.length; i++) 
+	      {
+	        if (items[i].isFile())
+	          line += items[i].getName() + "\r\n";			
+	        else if (items[i].isDirectory())
+	          line += "<DIRECTORY>" + items[i].getName() + "\r\n";			
+	      }
+	      formattedOutputResponse(line);
       }
-
-      formattedOutputResponse(line);
+      else {
+    	  System.out.println(errorResponse(404));
+      }
     }
 
              
@@ -295,12 +310,28 @@ public class Server {
         */
        
     }
+    
+    //Returns an error response
+ 	private static String errorResponse(int errorStatusCode) {
+ 		switch(errorStatusCode) {
+ 			case 403:
+ 				return "403 Forbidden";
+ 			case 404:
+ 				return "404 Not Found";
+ 			default:
+ 				return "400 Bad Request";				
+ 		}			
+ 	}
+    
 
     private static void formattedOutputResponse(String response) {
-
+    	System.out.println("ISVERBOSE");
+    	System.out.println(isVerbose);
+    	
     	if (isVerbose) {
             System.out.println(response);
-        } else {
+        } 
+    	else {
             String[] responseFormatted = response.split("\n\n");
 
             for (int i = 1; i < responseFormatted.length; i++)
