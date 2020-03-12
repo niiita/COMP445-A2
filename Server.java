@@ -4,6 +4,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.Console;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -73,11 +74,12 @@ public class Server {
                 System.out.println("filename: " + filename);
                 }
 
-                //HARD CODED ATM - must get content from request 
+                //HARD CODED ATM - must get content from (post) request 
                 String content = "{\"Assignment\":\"two\"}";                
                 
                     if (method.equals("GET")) {
-                        get(path, filename);
+                        // get(path, filename);
+                        post(path, filename, content);
                     } else if (method.equals("POST")) {
                         post(path, filename, content);
                     }       
@@ -99,6 +101,7 @@ public class Server {
             //If there is no path (i.e. just localhost:3001 is called)
 		    if (((path.length()<=1) || path == null) && (filename == "default")){
 
+                //Body should = list of files in directory.
             body = "{\"A2\" : \"sample body for get request\"}";
 			
 			response = 	"HTTP/1.0 200 ok\r\n"
@@ -148,24 +151,19 @@ public class Server {
     public static void post(String path, String filename, String data) {
         String body = "";
         String response = "";
-
-        /*
-        if(directory in path exists){
-            if(filename already exists){
-
-            }else{
-                // append contents to contents already in existing file
-            }
-            
-            //create new file named filename and add content(?)
-
-        }else{
-            // create new directories inquired in path
-            */
+        //***NOTE*** if conditions hard coded ATM must refactor to verify path and filename
+        //probably need to get existing directories and files to compare given path
         
-            try {  
-                PrintWriter extWriter = new PrintWriter(filename);
-                extWriter.write(data);
+         if(true==true){// directory doesnt exist
+            //create directory  
+            
+            }else if(true==true){ //filename already exists
+                //append to corresponding file
+                try {  
+                FileWriter f = new FileWriter(filename, true); 
+                BufferedWriter b = new BufferedWriter(f); 
+                PrintWriter extWriter = new PrintWriter(b);
+                extWriter.println(data);
                 extWriter.close();
                         body = data;
                         response = "POST "+path+" HTTP/1.0\r\n"
@@ -175,11 +173,29 @@ public class Server {
                                 + body;
 
                     System.out.println("Response sent to client\n" + response);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        //  }
-        
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }else{ //if filename not in directory
+                    //create new file
+                    try {  
+                    PrintWriter extWriter = new PrintWriter(filename);
+                    extWriter.write(data);
+                    extWriter.close();
+                            body = data;
+                            response = "POST "+path+" HTTP/1.0\r\n"
+                                    + "Content-Type:application/json\r\n"
+                                    + "Content-Length: " + body.length() +"\r\n"
+                                    + "\r\n"
+                                    + body;
+
+                        System.out.println("Response sent to client\n" + response);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                }
        
     }
 
